@@ -1,7 +1,13 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="Healix Backend API")
+from app.api.v1 import reports as ocr
 
-@app.get("/")
-def health_check():
-    return {"status": "Healix backend running"}
+app = FastAPI(
+    title="Healix Backend API",
+    description="AI-powered medical record system",
+    version="1.0.0"
+)
+
+app.include_router(ocr.router, prefix="/api/v1/ocr", tags=["OCR"])
+
