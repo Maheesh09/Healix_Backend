@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
+from app.api.v1.endpoints import doctor
+
 app = FastAPI(title="Healix Backend API")
 
-@app.get("/")
-def health_check():
-    return {"status": "Healix backend running"}
+app.include_router(doctor.router)
