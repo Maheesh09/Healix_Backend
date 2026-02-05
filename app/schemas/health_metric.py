@@ -26,7 +26,7 @@ class HealthMetricRead(HealthMetricBase):
     
     id: UUID
     user_id: UUID
-    health_assessment: str
+    flag: str
     created_at: datetime
     updated_at: datetime
 

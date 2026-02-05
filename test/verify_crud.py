@@ -43,6 +43,15 @@ SAMPLE_POOL = [
     ("Step Count", "steps", "GENERAL", (2000, 20000)),
     ("Calories Burned", "kcal", "GENERAL", (1200, 4000)),
     ("BMI", "kg/m2", "GENERAL", (16, 35)),
+    # Expansion
+    ("Fasting Plasma Glucose", "mg/dL", "ABDOMEN", (60, 250)),
+    ("Total Cholesterol", "mg/dL", "GENERAL", (140, 300)),
+    ("Triglycerides", "mg/dL", "ABDOMEN", (50, 300)),
+    ("HDL Cholesterol", "mg/dL", "ABDOMEN", (20, 80)),
+    ("LDL Cholesterol", "mg/dL", "ABDOMEN", (50, 200)),
+    ("Uric Acid", "mg/dL", "GENERAL", (2.0, 10.0)),
+    ("Vitamin D", "ng/mL", "GENERAL", (10, 120)),
+    ("Vitamin B12", "pg/mL", "HEAD", (100, 1200)),
 ]
 
 def log_request(response, method, path):
@@ -66,13 +75,32 @@ def get_metrics(category=None):
     return resp.json()
 
 def pre_populate():
-    print(f"\n[~] Generating 10 random metrics for User {USER_ID[:8]}...")
-    # Seed from the expanded pool
-    samples = random.sample(SAMPLE_POOL, 10)
-    for name, unit, cat, (low, high) in samples:
-        val = round(random.uniform(low, high), 1)
-        # We pass name and value, letting server auto-detect unit and category
+    print(f"\n[~] Generating 15 random metrics for User {USER_ID[:8]}...")
+    samples = random.sample(SAMPLE_POOL, 15)
+    
+    clinical_metrics = [
+        "Heart Rate", "Systolic BP", "Diastolic BP", 
+        "SpO2", "Blood Glucose", "Body Temp", 
+        "Fasting Plasma Glucose"
+    ]
+    
+    # Identify indices of clinical metrics in our sample
+    clinical_indices = [i for i, s in enumerate(samples) if s[0] in clinical_metrics]
+    # Pick one specific clinical metric to definitely be extreme
+    guaranteed_extreme_idx = random.choice(clinical_indices) if clinical_indices else -1
+
+    for i, (name, unit, cat, (low, high)) in enumerate(samples):
+        # 30% general chance, OR guaranteed if it's our chosen one
+        if i == guaranteed_extreme_idx or (name in clinical_metrics and random.random() < 0.3):
+            if random.random() < 0.5:
+                val = round(low * random.uniform(0.4, 0.7), 1)
+            else:
+                val = round(high * random.uniform(1.3, 1.8), 1)
+        else:
+            val = round(random.uniform(low, high), 1)
+            
         create_metric(name, val)
+        
     print("\n[OK] Setup complete. Press any key to enter Dashboard...")
     input()
 
@@ -81,24 +109,13 @@ def print_table(metrics, title="ACTIVE METRICS"):
     print(f"\n=== {title} ===")
     print(f"User: {USER_ID}")
     print("-" * 88)
-    print(f"{'#':<4} | {'NAME':<20} | {'VALUE':<8} | {'UNIT':<12} | {'CATEGORY':<10} | {'ASSESSMENT'}")
+    print(f"{'#':<4} | {'NAME':<25} | {'VALUE':<8} | {'UNIT':<12} | {'CATEGORY':<10} | {'FLAG'}")
     print("-" * 88)
     for i, m in enumerate(metrics):
-        assessment = m.get('health_assessment', 'UNKNOWN')
-        # Map LEVEL_X to a more readable format
-        lvl_map = {
-            "LEVEL_1": "L1 (Crit-)",
-            "LEVEL_2": "L2 (Low) ",
-            "LEVEL_3": "L3 (Opt) ",
-            "LEVEL_4": "L4 (High)",
-            "LEVEL_5": "L5 (Crit+)",
-            "NONE": "NONE",
-            "UNKNOWN": "UNKNOWN"
-        }
-        display_lvl = lvl_map.get(assessment, assessment)
+        flag = m.get('flag', 'Null')
         unit = m.get('unit', '---')
         cat = m.get('anatomy_category', '---')
-        print(f"{i+1:<4} | {m['metric_name']:<20} | {m['value']:<8.1f} | {unit:<12} | {cat:<10} | {display_lvl}")
+        print(f"{i+1:<4} | {m['metric_name']:<25} | {m['value']:<8.1f} | {unit:<12} | {cat:<10} | {flag}")
     print("-" * 88)
 
 def main():

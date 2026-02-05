@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.repo.health_metric_repo import HealthMetricRepo, MetricReferenceRepo
 from app.schemas.health_metric import HealthMetricCreate, HealthMetricUpdate, MetricReferenceBase
-from app.models.health_metric import HealthMetric, AnatomyCategory, HealthAssessment
+from app.models.health_metric import HealthMetric, AnatomyCategory, HealthFlag
 from uuid import UUID
 from typing import List, Optional
 from fastapi import HTTPException, status
@@ -11,46 +11,40 @@ class HealthMetricService:
     def calculate_assessment(db: Session, metric_name: str, value: float) -> str:
         ref = MetricReferenceRepo.get_by_name(db, metric_name)
         if not ref:
-            return HealthAssessment.UNKNOWN
+            return HealthFlag.NULL
             
         # If no thresholds are defined at all
         if all(t is None for t in [ref.threshold_1, ref.threshold_2, ref.threshold_3, ref.threshold_4]):
-            return HealthAssessment.NONE
+            return HealthFlag.NULL
         
-        # 1. Check Lower Critical Range (LEVEL_1)
+        # 1. Check Lower Critical Range (VERY_LOW)
         if ref.threshold_1 is not None and value < ref.threshold_1:
-            return HealthAssessment.LEVEL_1
+            return HealthFlag.VERY_LOW
             
-        # 2. Check Upper Critical Range (LEVEL_5)
+        # 2. Check Upper Critical Range (VERY_HIGH)
         if ref.threshold_4 is not None and value > ref.threshold_4:
-            return HealthAssessment.LEVEL_5
+            return HealthFlag.VERY_HIGH
             
-        # 3. Check Optimal Range (LEVEL_3)
-        # If both T2 and T3 exist, it's a bounded range.
+        # 3. Check Optimal Range (NULL)
         if ref.threshold_2 is not None and ref.threshold_3 is not None:
             if ref.threshold_2 <= value <= ref.threshold_3:
-                return HealthAssessment.LEVEL_3
-        # If only T2 exists (minimum target)
+                return HealthFlag.NULL
         elif ref.threshold_2 is not None and ref.threshold_3 is None:
             if value >= ref.threshold_2:
-                return HealthAssessment.LEVEL_3
-        # If only T3 exists (maximum target)
+                return HealthFlag.NULL
         elif ref.threshold_3 is not None and ref.threshold_2 is None:
             if value <= ref.threshold_3:
-                return HealthAssessment.LEVEL_3
+                return HealthFlag.NULL
                 
-        # 4. Check Low Range (LEVEL_2)
-        # If we reached here and there's a T2, and value is less than it...
+        # 4. Check Low Range (LOW)
         if ref.threshold_2 is not None and value < ref.threshold_2:
-            return HealthAssessment.LEVEL_2
+            return HealthFlag.LOW
             
-        # 5. Check High Range (LEVEL_4)
-        # If we reached here and there's a T3, and value is greater than it...
+        # 5. Check High Range (HIGH)
         if ref.threshold_3 is not None and value > ref.threshold_3:
-            return HealthAssessment.LEVEL_4
+            return HealthFlag.HIGH
             
-        # Fallback for metrics with only T1/T4 or partial definitions
-        return HealthAssessment.LEVEL_3
+        return HealthFlag.NULL
 
     @staticmethod
     def create_metric(db: Session, metric_in: HealthMetricCreate) -> HealthMetric:
@@ -75,7 +69,7 @@ class HealthMetricService:
         assessment = HealthMetricService.calculate_assessment(db, metric_in.metric_name, metric_in.value)
         
         db_metric = HealthMetric(**metric_data)
-        db_metric.health_assessment = assessment
+        db_metric.flag = assessment
         
         db.add(db_metric)
         db.commit()
@@ -111,7 +105,7 @@ class HealthMetricService:
         new_name = metric_in.metric_name if metric_in.metric_name is not None else db_metric.metric_name
         
         # Recalculate assessment
-        db_metric.health_assessment = HealthMetricService.calculate_assessment(db, new_name, new_value)
+        db_metric.flag = HealthMetricService.calculate_assessment(db, new_name, new_value)
         
         return HealthMetricRepo.update(db, db_metric, metric_in)
 
@@ -139,6 +133,16 @@ class HealthMetricService:
             MetricReferenceBase(metric_name="Sleep Hours", threshold_2=7.0, threshold_3=9.0, unit="hours", anatomy_category=AnatomyCategory.GENERAL),
             MetricReferenceBase(metric_name="Grip Strength", threshold_2=30.0, threshold_3=60.0, unit="kg", anatomy_category=AnatomyCategory.LIMBS),
             MetricReferenceBase(metric_name="Respiratory Rate", threshold_2=12.0, threshold_3=20.0, unit="breaths/min", anatomy_category=AnatomyCategory.CHEST),
+            
+            # --- NEW METRICS (Expansion) ---
+            MetricReferenceBase(metric_name="Fasting Plasma Glucose", threshold_1=70.0, threshold_2=100.0, threshold_3=126.0, threshold_4=200.0, unit="mg/dL", anatomy_category=AnatomyCategory.ABDOMEN),
+            MetricReferenceBase(metric_name="Total Cholesterol", threshold_2=200.0, threshold_3=240.0, unit="mg/dL", anatomy_category=AnatomyCategory.GENERAL),
+            MetricReferenceBase(metric_name="Triglycerides", threshold_2=150.0, threshold_3=200.0, unit="mg/dL", anatomy_category=AnatomyCategory.ABDOMEN),
+            MetricReferenceBase(metric_name="HDL Cholesterol", threshold_2=40.0, threshold_3=60.0, unit="mg/dL", anatomy_category=AnatomyCategory.ABDOMEN),
+            MetricReferenceBase(metric_name="LDL Cholesterol", threshold_2=100.0, threshold_3=160.0, unit="mg/dL", anatomy_category=AnatomyCategory.ABDOMEN),
+            MetricReferenceBase(metric_name="Uric Acid", threshold_2=3.4, threshold_3=7.0, unit="mg/dL", anatomy_category=AnatomyCategory.GENERAL),
+            MetricReferenceBase(metric_name="Vitamin D", threshold_2=30.0, threshold_3=100.0, unit="ng/mL", anatomy_category=AnatomyCategory.GENERAL),
+            MetricReferenceBase(metric_name="Vitamin B12", threshold_2=200.0, threshold_3=900.0, unit="pg/mL", anatomy_category=AnatomyCategory.HEAD),
 
             # --- TRACKING ONLY (0 Thresholds) ---
             MetricReferenceBase(metric_name="Step Count", unit="steps", anatomy_category=AnatomyCategory.GENERAL),

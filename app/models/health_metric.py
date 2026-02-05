@@ -12,14 +12,12 @@ class AnatomyCategory(str, enum.Enum):
     LIMBS = "LIMBS"
     GENERAL = "GENERAL"
 
-class HealthAssessment(str, enum.Enum):
-    LEVEL_1 = "LEVEL_1" # Critical Low
-    LEVEL_2 = "LEVEL_2" # Low
-    LEVEL_3 = "LEVEL_3" # Optimal
-    LEVEL_4 = "LEVEL_4" # High
-    LEVEL_5 = "LEVEL_5" # Critical High
-    NONE = "NONE" # No assessment needed
-    UNKNOWN = "UNKNOWN"
+class HealthFlag(str, enum.Enum):
+    VERY_LOW = "Very Low"
+    LOW = "Low"
+    NULL = "Null"
+    HIGH = "High"
+    VERY_HIGH = "Very High"
 
 class MetricReference(Base):
     __tablename__ = "metric_references"
@@ -45,7 +43,7 @@ class HealthMetric(Base):
     value = Column(Float, nullable=False)
     unit = Column(String, nullable=False)
     anatomy_category = Column(Enum(AnatomyCategory), nullable=False, default=AnatomyCategory.GENERAL)
-    health_assessment = Column(String, nullable=False, default="UNKNOWN")
+    flag = Column(String, nullable=False, default=HealthFlag.NULL)
     
     recorded_at = Column(DateTime(timezone=True), server_default=func.now())
     created_at = Column(DateTime(timezone=True), server_default=func.now())
