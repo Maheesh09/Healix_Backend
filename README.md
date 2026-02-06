@@ -197,7 +197,7 @@ Returns list of all processed reports for a patient.
 
 - **Extensible Design**: New report types can be added by creating a normalization module
 - **Configuration-Driven**: All biomarker mappings in `biomarker_config.py`
-- **Noise-Resistant**: Handles Korean characters, OCR artifacts, and formatting inconsistencies
+- **Noise-Resistant**: Handles wrong characters, OCR artifacts, and formatting inconsistencies
 - **Type-Safe**: Uses Pydantic schemas for validation
 
 See [docs/NORMALIZATION.md](docs/NORMALIZATION.md) for detailed documentation.  
