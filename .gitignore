@@ -5,8 +5,9 @@ __pycache__/
 *.pyd
 *.pyc
 
-.venv/
+
 venv/
+.env
 .env/
 .env.*
 !.env.example
@@ -28,14 +29,16 @@ dist/
 *.egg-info/
 
 
+
 .coverage
 htmlcov/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 
 *.db
 uvicorn.log
-server_log.txt
 
 
 uploads/
@@ -45,6 +48,7 @@ media/
 
 credentials.json
 service-account.json
+key.json
 *.key
 *.pem
 
