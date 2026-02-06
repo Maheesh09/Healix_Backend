@@ -35,6 +35,7 @@ htmlcov/
 
 *.db
 uvicorn.log
+server_log.txt
 
 
 uploads/
