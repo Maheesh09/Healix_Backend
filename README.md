@@ -1,4 +1,4 @@
-# Healix Backend
+# Healix_Backend
 
 AI-powered medical record digitization system for Sri Lankan healthcare facilities.
 
@@ -321,4 +321,8 @@ This project is part of the Healix digital health platform for Sri Lanka.
 
 ## License
 
+<<<<<<< HEAD
 Proprietary - All rights reserved
+=======
+Proprietary - All rights reserved
+>>>>>>> origin/dev
