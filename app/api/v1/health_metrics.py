@@ -7,7 +7,7 @@ from app.core.database import get_db
 from uuid import UUID
 from typing import List, Optional
 
-router = APIRouter(prefix="/health-metrics", tags=["Health Metrics"])
+router = APIRouter(prefix="/health", tags=["Health Metrics"])
 
 @router.post("/", response_model=HealthMetricRead, status_code=status.HTTP_201_CREATED)
 def create_health_metric(

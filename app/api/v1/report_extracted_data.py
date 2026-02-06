@@ -10,7 +10,7 @@ from app.core.database import get_db
 from uuid import UUID
 from typing import List
 
-router = APIRouter(prefix="/report-extracted-data", tags=["Report Extracted Data"])
+router = APIRouter(prefix="/report", tags=["Report Extracted Data"])
 
 @router.post("/", response_model=ReportExtractedDataRead, status_code=status.HTTP_201_CREATED)
 def create_report_data(

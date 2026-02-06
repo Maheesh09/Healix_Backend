@@ -17,16 +17,9 @@ class HealthMetricRepo:
     def get_by_id(db: Session, metric_id: UUID) -> Optional[HealthMetric]:
         return db.query(HealthMetric).filter(HealthMetric.id == metric_id).first()
 
-    @staticmethod
-    def get_multi(
-        db: Session, 
-        user_id: UUID, 
-        anatomy_category: Optional[AnatomyCategory] = None,
-        skip: int = 0, 
-        limit: int = 100
-    ) -> List[HealthMetric]:
+    def get_multi(db: Session, user_id: UUID, anatomy_category: Optional[AnatomyCategory] = None, skip: int = 0, limit: int = 100):
         query = db.query(HealthMetric).filter(HealthMetric.user_id == user_id)
-        if anatomy_category:
+        if anatomy_category is not None:
             query = query.filter(HealthMetric.anatomy_category == anatomy_category)
         return query.offset(skip).limit(limit).all()
 

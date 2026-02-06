@@ -17,6 +17,5 @@ class ReportExtractedData(Base):
     report_type = Column(String, index=True, nullable=False)
     extracted_json = Column(JSON, nullable=False)
     raw_text = Column(Text, nullable=True)
-    
     created_at = Column(DateTime(timezone=True), default=get_ist_time)
     updated_at = Column(DateTime(timezone=True), default=get_ist_time, onupdate=get_ist_time)
