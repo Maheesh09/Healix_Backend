@@ -9,6 +9,7 @@ anyio==3.7.1
 astunparse==1.6.3
 asyncio==3.4.3
 attrs==25.3.0
+bcrypt==4.2.2
 beautifulsoup4==4.13.4
 binencrypt==2.5
 bitarray==2.9.3
@@ -24,6 +25,7 @@ cryptodo==3.3
 cryptography==41.0.7
 distro==1.9.0
 ecdsa==0.19.0
+email-validator==2.2.0
 esptool==4.8.1
 et_xmlfile==2.0.0
 Faker==37.4.2

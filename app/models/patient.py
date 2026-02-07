@@ -1,12 +1,21 @@
 # app/models/patient.py
-from app.core.database import Base
-from sqlalchemy import Column, Integer, String, Date
+from dataclasses import dataclass
+from datetime import datetime
+from uuid import UUID
+from typing import Optional
 
-class Patient(Base):
-    __tablename__ = "patients"
-
-    id = Column(Integer, primary_key=True, index=True)
-    fname = Column(String, nullable=False)
-    lname = Column(String, nullable=False)
-    dob = Column(Date, nullable=False)
-    phone = Column(String, nullable=False, unique=True)
+@dataclass
+class Patient:
+    """
+    Patient model matching Supabase schema.
+    Note: This is for documentation only.
+    The actual database schema is managed by Supabase.
+    """
+    id: UUID
+    full_name: str
+    email: str
+    phone: Optional[str]
+    password_hash: str
+    nic: Optional[str]
+    created_at: datetime
+    
