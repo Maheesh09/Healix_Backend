@@ -119,7 +119,40 @@ def update_patient(patient_id: str, updates: PatientUpdate) -> dict:
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+def update_patient_password(patient_id: str, current_password: str, new_password: str) -> dict:
+    """Update patient password after verifying current password"""
+    try:
+        # Get current patient with password_hash
+        patient_response = supabase.table("patients").select("*").eq("id", patient_id).execute()
+        
+        if not patient_response.data:
+            return {"success": False, "error": "Patient not found"}
+        
+        patient = patient_response.data[0]
+        
+        # Verify current password
+        if not verify_password(current_password, patient['password_hash']):
+            return {"success": False, "error": "Current password is incorrect"}
+        
+        # Hash new password
+        new_password_hash = hash_password(new_password)
+        
+        # Update password
+        response = supabase.table("patients").update({
+            "password_hash": new_password_hash
+        }).eq("id", patient_id).execute()
+        
+        if response.data:
+            return {
+                "success": True,
+                "message": "Password changed successfully"
+            }
+        return {"success": False, "error": "Failed to update password"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 def delete_patient(patient_id: str) -> dict:
+
     """Delete a patient"""
     try:
         response = supabase.table("patients").delete().eq("id", patient_id).execute()

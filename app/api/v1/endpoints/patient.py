@@ -1,5 +1,5 @@
 # app/api/v1/endpoints/patient.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 from app.schemas.patient import PatientCreate, PatientUpdate, PatientOut, PatientLogin
 from app.services.patientService import (
     create_patient,
@@ -9,9 +9,11 @@ from app.services.patientService import (
     get_patient_by_nic,
     list_patients,
     update_patient,
+    update_patient_password,
     delete_patient
 )
 from typing import List
+
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
 
@@ -77,8 +79,22 @@ def update_patient_endpoint(patient_id: str, updates: PatientUpdate):
         raise HTTPException(status_code=404, detail=result.get("error", "Failed to update patient"))
     return result
 
+# Password Change
+@router.patch("/{patient_id}/password")
+def change_password_endpoint(
+    patient_id: str,
+    current_password: str = Body(..., embed=True),
+    new_password: str = Body(..., embed=True)
+):
+    """Change patient password"""
+    result = update_patient_password(patient_id, current_password, new_password)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error", "Failed to change password"))
+    return result
+
 # Delete
 @router.delete("/{patient_id}")
+
 def delete_patient_endpoint(patient_id: str):
     """Delete a patient account"""
     result = delete_patient(patient_id)
