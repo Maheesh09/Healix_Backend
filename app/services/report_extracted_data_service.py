@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 from app.models.health_metric import AnatomyCategory
-from app.models.health_metric import AnatomyCategory
 from app.repo.report_extracted_data_repo import ReportExtractedDataRepo
 from app.schemas.health_metric import HealthMetricCreate
 from app.schemas.report_extracted_data import ReportExtractedDataCreate, ReportExtractedDataUpdate
@@ -84,8 +83,10 @@ class ReportExtractedDataService:
             
             if metric_name in ["Heart Rate", "Systolic BP", "Diastolic BP", "SpO2"]:
                 anatomy_category = AnatomyCategory.CHEST
-            elif metric_name in ["Blood Glucose", "ALT", "AST", "Bilirubin", "Fasting Plasma Glucose"]:
+            elif metric_name in ["Blood Glucose", "ALT", "AST", "Bilirubin", "Fasting Plasma Glucose", "Triglycerides", "HDL Cholesterol", "LDL Cholesterol"]:
                 anatomy_category = AnatomyCategory.ABDOMEN
+            elif metric_name in ["Total Cholesterol"]:
+                anatomy_category = AnatomyCategory.GENERAL
             elif metric_name in ["Vision (L)", "Vision (R)", "Hearing Level", "Reaction Time"]:
                 anatomy_category = AnatomyCategory.HEAD
             elif metric_name in ["Grip Strength", "Knee Reflex", "Calf Circumference", "Arm Circumference", "Hand Strength"]:

@@ -6,6 +6,8 @@ from app.api.v1.endpoints import reports as ocr
 from app.api.v1.endpoints import patient
 from app.api.v1.endpoints import care_circle
 from app.api.v1.endpoints import medication
+from app.api.v1.endpoints import trends
+from app.api.v1.endpoints import health_metrics
 
 app = FastAPI(
     title="Healix Backend API",
@@ -26,5 +28,7 @@ app.include_router(ocr.router, prefix="/api/v1/ocr", tags=["OCR"])
 app.include_router(patient.router, prefix="/api/v1", tags=["Patients"])
 app.include_router(care_circle.router, prefix="/api/v1", tags=["Care Circle"])
 app.include_router(medication.router, prefix="/api/v1", tags=["Medications"])
+app.include_router(trends.router, prefix="/api/v1", tags=["Trends"])
+app.include_router(health_metrics.router, prefix="/api/v1", tags=["Health Metrics"])
 
 
