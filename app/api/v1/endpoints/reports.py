@@ -52,6 +52,12 @@ async def upload_report(
     try:
         # Upload to GCS using NIC for folder structure
         upload_info = upload_pdf_to_bucket(temp_path, nic)
+    except Exception as e:
+        # Catch upload errors and return meaningful message
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Upload Error: {str(e)}"
+        )
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
