@@ -1,12 +1,10 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from typing import List
 from uuid import UUID
 
 from app.core.database import get_db
-from app.models.biomarker import Biomarker
-from app.models.report import Report
 from app.models.health_metric import HealthMetric
 from app.schemas.trend import BiomarkerTrend, BiomarkerDataPoint
 
@@ -28,29 +26,16 @@ def get_biomarker_names(
     db: Session = Depends(get_db)
 ):
     """
-    Get list of available biomarker names for a patient.
-    Combines names from both report biomarkers and manually entered health metrics.
+    Get list of available biomarker names for a patient based on manually entered health metrics.
     """
-    # Names from report biomarkers
-    biomarker_results = (
-        db.query(Biomarker.name)
-        .join(Report)
-        .filter(Report.patient_id == patient_id)
-        .distinct()
-        .all()
-    )
-    names = set(r[0] for r in biomarker_results)
-
-    # Names from health_metrics (user_id == patient_id)
     hm_results = (
         db.query(HealthMetric.metric_name)
         .filter(HealthMetric.user_id == patient_id)
         .distinct()
         .all()
     )
-    for r in hm_results:
-        names.add(r[0])
 
+    names = set(r[0] for r in hm_results)
     return sorted(list(names))
 
 @router.get("/data", response_model=BiomarkerTrend)
@@ -60,43 +45,15 @@ def get_biomarker_data(
     db: Session = Depends(get_db)
 ):
     """
-    Get trend data for a specific biomarker.
-    Merges data from report biomarkers and manually entered health metrics.
+    Get trend data for a specific biomarker based solely on manually entered health metrics.
+    Supports alias mapping so frontend queries like "Fasting Plasma Glucose" also match
+    entries like "Blood Glucose".
     """
-    data_points = []
+    data_points: List[BiomarkerDataPoint] = []
     last_unit = None
-    last_ref_min = None
-    last_ref_max = None
 
-    # 1. Get data from report biomarkers
-    results = (
-        db.query(Biomarker, Report)
-        .join(Report)
-        .filter(Report.patient_id == patient_id, Biomarker.name == name)
-        .order_by(desc(Report.created_at))
-        .all()
-    )
-
-    for bookmark, report in results:
-        date_val = report.sample_collected_at or report.created_at
-        if bookmark.value is not None:
-             data_points.append(BiomarkerDataPoint(
-                date=date_val,
-                value=bookmark.value,
-                unit=bookmark.unit,
-                flag=bookmark.flag
-            ))
-        if last_unit is None and bookmark.unit:
-            last_unit = bookmark.unit
-        if last_ref_min is None and bookmark.ref_min is not None:
-            last_ref_min = bookmark.ref_min
-        if last_ref_max is None and bookmark.ref_max is not None:
-            last_ref_max = bookmark.ref_max
-
-    # 2. Get data from health_metrics table
     # Match by exact metric_name, or by known aliases
     metric_names_to_query = [name]
-    # Add reverse lookups: if querying "Fasting Plasma Glucose", also grab "Blood Glucose" etc.
     for hm_name, bio_name in HEALTH_METRIC_TO_BIOMARKER.items():
         if bio_name == name and hm_name not in metric_names_to_query:
             metric_names_to_query.append(hm_name)
@@ -128,14 +85,10 @@ def get_biomarker_data(
         return BiomarkerTrend(name=name, data_points=[])
 
     # Deduplicate data points based on date (to the minute) and value
-    # This prevents showing duplicate points if data exists in both tables
     unique_points = {}
     for p in data_points:
-        # Determine date key (round to minute to catch slight differences)
         date_key = p.date.strftime("%Y-%m-%d %H:%M")
         key = (date_key, p.value)
-        
-        # Prefer points with units/flags if existing one doesn't have them
         if key not in unique_points:
             unique_points[key] = p
         else:
@@ -152,6 +105,6 @@ def get_biomarker_data(
         name=name,
         data_points=data_points,
         unit=last_unit,
-        ref_min=last_ref_min,
-        ref_max=last_ref_max
+        ref_min=None,
+        ref_max=None
     )
